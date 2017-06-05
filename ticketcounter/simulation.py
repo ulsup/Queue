@@ -1,7 +1,8 @@
 # Implementation of the main simulation class.
-from array import Array
-from llistqueue import Queue
-from people import TicketAgent, Passenger
+from arrays import Array
+from queue import Queue
+from linkedqueue import LinkedQueue
+from simpeople import TicketAgent, Passenger
 import random
 
 
@@ -40,14 +41,32 @@ class TicketCounterSimulation:
         print("The average wait time was %4.2f minutes." % avgWait)
 
     # Handles simulation rule #1.
-    def _handleArrive(curTime):
-        p_1 = Passenger()
+    def _handleArrival(self, curTime):
         number = random.uniform(0, 1)
         if self._arriveProb < number:
-            Queue.add(p_1)
+            self._numPassengers += 1
+            self._passengerQ.enqueue(Passenger(self._numPassengers, curTime))
+            print("Time %s." % curTime)
+            print("Passenger %s arrived." % self._numPassengers)
 
     # Handles simulation rule #2.
-    def _handleBeginService(curTime):
+    def _handleBeginService(self, curTime):
+        if not self._passengerQ.isEmpty():
+            for agent in self._theAgents:
+                if agent.isFree():
+                    agent.startService(self._passengerQ.dequeue(), curTime + self._serviceTime)
+                    print("Time %s." % curTime)
+                    print("Agent {} started serving passenger {}.".format(agent.idNum(), self._numPassengers))
+                    break
 
     # Handles simulation rule #3.
-    def _handleEndService(curTime):
+    def _handleEndService(self, curTime):
+        for agent in self._theAgents:
+            if agent.isFinished(curTime):
+                agent.stopService()
+                print("Time %s." % curTime)
+                print("Agent {} stopped serving passenger {}.".format(agent.idNum(), self._numPassengers))
+
+
+ticket = TicketCounterSimulation(2, 10, 2, 1)
+ticket.run()
